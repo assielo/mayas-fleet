@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: mayas-fleet
+    env: php
+    region: frankfurt # ou ohio selon votre préférence géographique
+    plan: free
+    buildCommand: "composer install --no-dev --optimize-autoloader && php artisan config:cache && php artisan route:cache"
+    startCommand: "apache2-run" # ou le serveur intégré PHP si configuré
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: true
+      - key: LOG_CHANNEL
+        value: stderr
