@@ -1,2 +1,0 @@
-[phases.setup]
-phpExtensions = ["intl", "mbstring", "pdo_pgsql", "bcmath", "curl", "openssl", "xml"]
