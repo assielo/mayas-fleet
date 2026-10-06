@@ -5,8 +5,16 @@ use App\Http\Controllers\Api\VehicleController;
 use App\Http\Controllers\Api\DriverController;
 use App\Http\Controllers\Api\MissionController;
 
+// 1. Route pour la page d'accueil / racine (Évite l'erreur 404 sur Render)
+Route::get('/', function () {
+    return response()->json([
+        'app' => 'Mayas Fleet API',
+        'status' => 'Online 🚀',
+        'message' => 'Bienvenue sur l\'API de gestion de flotte'
+    ]);
+});
 
-// Routes pour le gestionnaire de flotte
+// 2. Routes pour le gestionnaire de flotte
 Route::apiResource('vehicles', VehicleController::class);
 Route::apiResource('drivers', DriverController::class);
 Route::apiResource('missions', MissionController::class);
@@ -16,7 +24,3 @@ Route::get('/vehicles/export', [VehicleController::class, 'export'])->name('vehi
 
 // Route pour importer les données
 Route::post('/vehicles/import', [VehicleController::class, 'import'])->name('vehicles.import');
-
-
-// Route API pour les chauffeurs (génère automatiquement /api/drivers, /api/drivers/{id}, etc.)
-Route::apiResource('drivers', DriverController::class);
