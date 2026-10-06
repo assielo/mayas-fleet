@@ -1,6 +1,6 @@
 FROM php:8.2-apache
 
-# 1. Installer les dépendances système et extensions nécessaires pour Laravel et PostgreSQL
+# 1. Installer les dépendances système et extensions nécessaires
 RUN apt-get update && apt-get install -y \
     git \
     curl \
@@ -23,21 +23,21 @@ WORKDIR /var/www/html
 # 5. Copier les fichiers du projet
 COPY . /var/www/html
 
-# 6. Installer les dépendances Composer en mode production
+# 6. Installer les dépendances Composer
 RUN composer install --no-dev --optimize-autoloader --no-interaction --ignore-platform-reqs
 
-# 7. Rediriger le DocumentRoot d'Apache vers le dossier public de Laravel
+# 7. Rediriger le DocumentRoot d'Apache vers le dossier public
 ENV APACHE_DOCUMENT_ROOT /var/www/html/public
 RUN sed -ri -s 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
 RUN sed -ri -s 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf
 
-# 8. Activer mod_rewrite d'Apache
+# 8. Activer mod_rewrite
 RUN a2enmod rewrite
 
-# 9. Créer un script de démarrage pour fixer les permissions, vider les caches, migrer et lancer Apache
+# 9. Script de démarrage : permissions maximales, nettoyage, migrations et lancement d'Apache
 RUN echo '#!/bin/sh' > /var/www/html/start.sh && \
     echo 'chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache' >> /var/www/html/start.sh && \
-    echo 'chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache' >> /var/www/html/start.sh && \
+    echo 'chmod -R 777 /var/www/html/storage /var/www/html/bootstrap/cache' >> /var/www/html/start.sh && \
     echo 'php artisan config:clear' >> /var/www/html/start.sh && \
     echo 'php artisan route:clear' >> /var/www/html/start.sh && \
     echo 'php artisan migrate --force' >> /var/www/html/start.sh && \
