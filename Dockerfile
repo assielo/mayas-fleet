@@ -11,7 +11,7 @@ RUN apt-get update && apt-get install -y \
     zip \
     unzip
 
-# 2. Installer les extensions PHP (avec pdo_pgsql pour PostgreSQL)
+# 2. Installer les extensions PHP
 RUN docker-php-ext-install pdo pdo_mysql pdo_pgsql mbstring exif pcntl bcmath gd
 
 # 3. Installer Composer
@@ -26,25 +26,24 @@ COPY . /var/www/html
 # 6. Installer les dépendances Composer en mode production
 RUN composer install --no-dev --optimize-autoloader --no-interaction --ignore-platform-reqs
 
-# 7. Configurer les permissions pour Laravel
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
-
-# 8. Rediriger le DocumentRoot d'Apache vers le dossier public de Laravel
+# 7. Rediriger le DocumentRoot d'Apache vers le dossier public de Laravel
 ENV APACHE_DOCUMENT_ROOT /var/www/html/public
 RUN sed -ri -s 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
 RUN sed -ri -s 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf
 
-# 9. Activer mod_rewrite d'Apache
+# 8. Activer mod_rewrite d'Apache
 RUN a2enmod rewrite
 
-# 10. Créer un script de démarrage pour vider les caches, migrer la BDD et lancer Apache
+# 9. Créer un script de démarrage pour fixer les permissions, vider les caches, migrer et lancer Apache
 RUN echo '#!/bin/sh' > /var/www/html/start.sh && \
+    echo 'chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache' >> /var/www/html/start.sh && \
+    echo 'chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache' >> /var/www/html/start.sh && \
     echo 'php artisan config:clear' >> /var/www/html/start.sh && \
     echo 'php artisan route:clear' >> /var/www/html/start.sh && \
     echo 'php artisan migrate --force' >> /var/www/html/start.sh && \
     echo 'apache2-foreground' >> /var/www/html/start.sh && \
     chmod +x /var/www/html/start.sh
 
-# 11. Exposer le port 80 et lancer le script
+# 10. Exposer le port 80 et lancer le script
 EXPOSE 80
 CMD ["/var/www/html/start.sh"]
