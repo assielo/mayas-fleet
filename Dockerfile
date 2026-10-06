@@ -34,7 +34,13 @@ RUN sed -ri -s 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf
 # 8. Activer mod_rewrite
 RUN a2enmod rewrite
 
-# 9. Script de démarrage : permissions maximales, nettoyage, migrations et lancement d'Apache
+# 9. Préparer les dossiers storage/bootstrap et le fichier de log avec les bons droits
+RUN mkdir -p /var/www/html/storage/logs /var/www/html/storage/framework/sessions /var/www/html/storage/framework/views /var/www/html/storage/framework/cache && \
+    touch /var/www/html/storage/logs/laravel.log && \
+    chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache && \
+    chmod -R 777 /var/www/html/storage /var/www/html/bootstrap/cache
+
+# 10. Créer le script de démarrage
 RUN echo '#!/bin/sh' > /var/www/html/start.sh && \
     echo 'chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache' >> /var/www/html/start.sh && \
     echo 'chmod -R 777 /var/www/html/storage /var/www/html/bootstrap/cache' >> /var/www/html/start.sh && \
@@ -44,6 +50,6 @@ RUN echo '#!/bin/sh' > /var/www/html/start.sh && \
     echo 'apache2-foreground' >> /var/www/html/start.sh && \
     chmod +x /var/www/html/start.sh
 
-# 10. Exposer le port 80 et lancer le script
+# 11. Exposer le port 80 et lancer le script
 EXPOSE 80
 CMD ["/var/www/html/start.sh"]
