@@ -1,6 +1,6 @@
 FROM php:8.2-apache
 
-# Installer les dépendances système et extensions nécessaires pour Laravel
+# 1. Installer les dépendances système et extensions nécessaires pour Laravel et PostgreSQL
 RUN apt-get update && apt-get install -y \
     git \
     curl \
@@ -11,28 +11,40 @@ RUN apt-get update && apt-get install -y \
     zip \
     unzip
 
-# Installer les extensions PHP
+# 2. Installer les extensions PHP (avec pdo_pgsql pour PostgreSQL)
 RUN docker-php-ext-install pdo pdo_mysql pdo_pgsql mbstring exif pcntl bcmath gd
 
-# Installer Composer
+# 3. Installer Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Définir le répertoire de travail
+# 4. Définir le répertoire de travail
 WORKDIR /var/www/html
 
-# Copier les fichiers du projet
+# 5. Copier les fichiers du projet
 COPY . /var/www/html
 
-# Installer les dépendances Composer
+# 6. Installer les dépendances Composer en mode production
 RUN composer install --no-dev --optimize-autoloader --no-interaction --ignore-platform-reqs
 
-# Configurer les permissions pour Laravel
+# 7. Configurer les permissions pour Laravel
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 
-# Rediriger le DocumentRoot d'Apache vers le dossier public de Laravel
+# 8. Rediriger le DocumentRoot d'Apache vers le dossier public de Laravel
 ENV APACHE_DOCUMENT_ROOT /var/www/html/public
 RUN sed -ri -s 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
 RUN sed -ri -s 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf
 
-# Activer mod_rewrite
+# 9. Activer mod_rewrite d'Apache
 RUN a2enmod rewrite
+
+# 10. Créer un script de démarrage pour vider les caches, migrer la BDD et lancer Apache
+RUN echo '#!/bin/sh' > /var/www/html/start.sh && \
+    echo 'php artisan config:clear' >> /var/www/html/start.sh && \
+    echo 'php artisan route:clear' >> /var/www/html/start.sh && \
+    echo 'php artisan migrate --force' >> /var/www/html/start.sh && \
+    echo 'apache2-foreground' >> /var/www/html/start.sh && \
+    chmod +x /var/www/html/start.sh
+
+# 11. Exposer le port 80 et lancer le script
+EXPOSE 80
+CMD ["/var/www/html/start.sh"]
