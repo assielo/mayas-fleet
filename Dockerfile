@@ -1,6 +1,6 @@
 FROM php:8.3-apache
 
-# 1. Installer les dépendances système et les extensions PHP nécessaires à Laravel
+# 1. Installer les dépendances système et les extensions PHP nécessaires à Laravel (ajout de libicu-dev pour intl)
 RUN apt-get update && apt-get install -y \
     git \
     curl \
@@ -8,13 +8,14 @@ RUN apt-get update && apt-get install -y \
     libonig-dev \
     libxml2-dev \
     libpq-dev \
+    libicu-dev \
     zip \
     unzip
 
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Installer les extensions PHP (avec pdo_pgsql pour PostgreSQL et pdo_mysql)
-RUN docker-php-ext-install pdo pdo_mysql pdo_pgsql mbstring exif pcntl bcmath gd
+# Installer les extensions PHP (ajout de intl)
+RUN docker-php-ext-install pdo pdo_mysql pdo_pgsql mbstring exif pcntl bcmath gd intl
 
 # 2. Installer Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
