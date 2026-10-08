@@ -36,7 +36,7 @@ RUN mkdir -p /var/www/html/storage/logs /var/www/html/storage/framework/sessions
 EXPOSE 10000
 
 # 8. Commande de démarrage avec migration fraîche et artisan serve
-CMD php artisan migrate:fresh --force && \
+CMD php artisan migrate:fresh --seed --force && \
     php artisan config:clear && \
     php artisan cache:clear && \
     php artisan serve --host=0.0.0.0 --port=10000
